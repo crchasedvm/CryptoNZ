@@ -3,73 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cryptosporidiosis in NZ Dairy Farms: An Interactive Deep Dive</title>
+    <title>Cryptosporidiosis in NZ Dairy Farms: An Interactive Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutrals & Subtle Accents -->
-    <!-- Application Structure Plan: A thematic, non-linear dashboard structure was chosen to allow users (vets, farmers, students) to explore topics based on their immediate needs, rather than following the linear flow of a report. The structure includes: 1) A high-level 'Key Insights' dashboard for quick situational awareness. 2) A visual, interactive 'Parasite Lifecycle' to explain the core biology. 3) A 'Prevention & Treatment' hub designed as a decision-support tool, allowing direct comparison of strategies. 4) An 'Economic Impact' section with an interactive chart to make the financial data tangible. This user-centric design prioritizes task completion (e.g., "compare treatments," "review prevention") over passive reading, which is more effective for knowledge retention and application based on the dense, multi-faceted source report. -->
+    <!-- Application Structure Plan: A thematic, non-linear dashboard structure was chosen to allow users (vets, farmers, students) to explore topics based on their immediate needs, rather than following a linear report. The structure includes: 1) A high-level 'Overview' for quick situational awareness with key stats. 2) A visual, interactive 'Parasite Deep Dive' to explain the core biology and lifecycle. 3) A 'Prevention Hub' with actionable, collapsible checklists for biosecurity and calf management. 4) A 'Treatment Comparator' designed as a decision-support tool, allowing direct comparison of strategies and costs. 5) An 'Economic Impact' section with an interactive chart to make the financial data tangible. This user-centric design prioritizes task completion (e.g., "compare treatments," "review hygiene protocols") over passive reading, which is more effective for knowledge retention and application. -->
     <!-- Visualization & Content Choices: 
-        - Report Info: Prevalence stats (47-52%). Goal: Inform. Viz: Key stat cards. Interaction: None. Justification: High-impact, immediate communication of scale. Method: HTML/Tailwind.
+        - Report Info: Prevalence stats (52%, 47%). Goal: Inform. Viz: Key stat cards. Interaction: None. Justification: High-impact, immediate communication of scale. Method: HTML/Tailwind.
         - Report Info: Parasite life cycle (oocyst types, autoinfection). Goal: Organize/Explain. Viz: Interactive HTML/CSS diagram. Interaction: Click on a stage to reveal details. Justification: Transforms a complex biological process from static text into an explorable diagram, improving comprehension. Method: HTML/CSS/JS.
-        - Report Info: Pathogenesis (villous atrophy). Goal: Explain Change. Viz: Simple HTML/CSS flow diagram. Interaction: None. Justification: Visually connects cause (parasite) to effect (disease) more clearly than prose. Method: HTML/Tailwind.
-        - Report Info: Treatment options (Halocur, Saponins, MOS etc.) & costs. Goal: Compare/Decide. Viz: Dynamic bar chart and text display. Interaction: User clicks buttons to select and compare different treatments. Justification: This is the core interactive element. It directly addresses the need to compare cost vs. efficacy, turning a static data table into a powerful decision-support tool. Method: Chart.js/JS.
-        - Report Info: Economic burden data. Goal: Inform/Quantify. Viz: Bar chart. Interaction: Hover for details. Justification: Visualizes the financial stakes more effectively than text alone. Method: Chart.js.
+        - Report Info: Prevention protocols (Decontamination, Biosecurity). Goal: Organize/Inform. Viz: Accordion-style collapsible sections. Interaction: Click to expand/collapse. Justification: Presents dense, actionable checklists in a manageable format, preventing a "wall of text" and allowing users to focus on one area at a time. Method: HTML/JS.
+        - Report Info: Treatment options (Halocur, Saponins, MOS etc.) & costs. Goal: Compare/Decide. Viz: Dynamic bar chart and text display. Interaction: User clicks buttons to select and compare different treatments, which updates both text and the chart. Justification: This is the core interactive element. It directly addresses the need to compare cost vs. efficacy, turning a static data table into a powerful decision-support tool. Method: Chart.js/JS.
+        - Report Info: Economic burden data. Goal: Inform/Quantify. Viz: Stacked bar chart. Interaction: Hover for details. Justification: Visualizes the financial stakes and the difference between direct and indirect costs more effectively than text alone. Method: Chart.js.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 40vh; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 350px; max-height: 45vh; }
+        @media (max-width: 768px) { .chart-container { height: 300px; max-height: 50vh; } }
         .nav-link { transition: all 0.3s ease; }
-        .nav-link.active { color: #1e40af; border-bottom-color: #1e40af; }
+        .nav-link.active { color: #1e3a8a; border-bottom-color: #1e3a8a; font-weight: 700; }
         .content-section { display: none; }
-        .content-section.active { display: block; }
-        .lifecycle-stage { cursor: pointer; transition: all 0.2s ease-in-out; }
-        .lifecycle-stage:hover { transform: translateY(-4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .treatment-btn.active { background-color: #1e40af; color: white; }
+        .content-section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .lifecycle-stage, .accordion-header { cursor: pointer; transition: all 0.2s ease-in-out; }
+        .lifecycle-stage:hover, .accordion-header:hover { background-color: #eef2ff; }
+        .treatment-btn.active { background-color: #1e3a8a; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
         
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-blue-900">Cryptosporidiosis on New Zealand Dairy Farms</h1>
-            <p class="mt-2 text-lg text-gray-600">An Interactive Guide to Biology, Management, and Economic Impact</p>
+            <h1 class="text-3xl md:text-5xl font-bold text-blue-900">Cryptosporidiosis on NZ Dairy Farms</h1>
+            <p class="mt-2 text-lg text-gray-600">An Interactive Dashboard for Management & Control</p>
         </header>
 
-        <nav class="flex justify-center border-b-2 border-gray-200 mb-8 space-x-4 md:space-x-8">
+        <nav class="sticky top-0 bg-gray-100 z-10 flex justify-center border-b-2 border-gray-200 mb-8 space-x-2 sm:space-x-4 md:space-x-8">
             <button data-target="overview" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">Overview</button>
-            <button data-target="biology" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">The Parasite</button>
-            <button data-target="disease" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">The Disease</button>
-            <button data-target="management" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">Management</button>
+            <button data-target="parasite" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">The Parasite</button>
+            <button data-target="prevention" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">Prevention Hub</button>
+            <button data-target="management" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">Treatment Options</button>
             <button data-target="economics" class="nav-link text-sm md:text-base font-semibold text-gray-600 hover:text-blue-800 py-3 border-b-2 border-transparent">Economics</button>
         </nav>
 
         <main>
-            <section id="overview" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Executive Summary & Key Insights</h2>
-                    <p class="text-gray-700 leading-relaxed">Cryptosporidiosis, caused by *Cryptosporidium parvum*, is a major challenge for the NZ dairy industry. It's widespread, economically damaging, and a risk to human health. Effective control isn't about a single solution but requires an integrated strategy combining strict biosecurity, excellent calf management, and targeted, evidence-based treatments. This dashboard provides an interactive exploration of the key facets of this complex disease.</p>
+            <section id="overview" class="content-section space-y-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Dashboard Summary</h2>
+                    <p class="text-gray-700 leading-relaxed">Cryptosporidiosis is a prevalent and costly disease for the New Zealand dairy industry. Caused by the parasite *Cryptosporidium parvum*, it poses a significant risk to calf health, farm economics, and public health. This dashboard synthesizes key data to provide an interactive guide for understanding and managing this challenge. Effective control requires an integrated strategy combining strict biosecurity, excellent calf management, and evidence-based interventions.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h3 class="text-4xl font-bold text-blue-600">52%</h3>
-                        <p class="mt-2 text-gray-600">Of NZ farms found positive for Crypto in healthy calves aged 9-21 days.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-5xl font-bold text-blue-600">52%</h3>
+                        <p class="mt-2 text-gray-600 font-semibold">Of farms positive for Crypto in healthy calves aged 9-21 days.</p>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h3 class="text-4xl font-bold text-red-600">47%</h3>
-                        <p class="mt-2 text-gray-600">Of scouring calf samples test positive, a rate similar to Rotavirus.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-5xl font-bold text-red-600">47%</h3>
+                        <p class="mt-2 text-gray-600 font-semibold">Of scouring calf samples test positive, similar to Rotavirus.</p>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm">
-                        <h3 class="text-4xl font-bold text-green-600">> NZ$170</h3>
-                        <p class="mt-2 text-gray-600">Potential cost per infected calf, including direct and indirect losses.</p>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-5xl font-bold text-green-600">> NZ$170</h3>
+                        <p class="mt-2 text-gray-600 font-semibold">Potential cost per infected calf, including direct and indirect losses.</p>
+                    </div>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Pathogenesis: From Infection to Scours</h2>
+                    <p class="text-gray-700 leading-relaxed mb-6">Clinical disease is a direct result of physical damage to the gut lining. The parasite's multiplication destroys the absorptive surfaces (villi), leading to an inability to absorb nutrients and a "leaky gut" that causes profuse, watery diarrhoea. The calf's own inflammatory response, while necessary, further contributes to the damage and long-term poor growth.</p>
+                    <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-center">
+                        <div class="p-4 bg-red-100 rounded-lg w-full md:w-1/4">
+                            <p class="font-bold">Parasite Invasion</p>
+                            <p class="text-sm">Destroys gut cells</p>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-500">&rarr;</div>
+                        <div class="p-4 bg-orange-100 rounded-lg w-full md:w-1/4">
+                            <p class="font-bold">Villous Atrophy</p>
+                            <p class="text-sm">Reduced surface area</p>
+                        </div>
+                        <div class="text-2xl font-bold text-gray-500">&rarr;</div>
+                        <div class="p-4 bg-yellow-100 rounded-lg w-full md:w-1/4">
+                            <p class="font-bold">Malabsorption & Leakage</p>
+                            <p class="text-sm">Leads to diarrhoea, dehydration & acidosis</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section id="biology" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+            <section id="parasite" class="content-section">
+                <div class="bg-white p-6 rounded-lg shadow-md">
                     <h2 class="text-2xl font-bold text-blue-800 mb-4">The Parasite Lifecycle: A Dual Threat</h2>
                     <p class="text-gray-700 leading-relaxed mb-6">The success of *C. parvum* lies in its rapid, direct life cycle and its production of two oocyst types. This dual strategy fuels both severe disease within a single calf (autoinfection) and explosive outbreaks across the herd (environmental contamination). Click on each stage below to learn more.</p>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -102,44 +125,73 @@
                 </div>
             </section>
 
-            <section id="disease" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Pathogenesis: From Infection to Scours</h2>
-                    <p class="text-gray-700 leading-relaxed mb-6">Clinical disease is a direct result of physical damage to the gut lining. The parasite's multiplication destroys the absorptive surfaces (villi), leading to an inability to absorb nutrients and a "leaky gut" that causes profuse, watery diarrhoea. The calf's own inflammatory response, while necessary, further contributes to the damage and long-term poor growth.</p>
-                    <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4 text-center">
-                        <div class="p-4 bg-red-100 rounded-lg w-full md:w-1/4">
-                            <p class="font-bold">Parasite Invasion</p>
-                            <p class="text-sm">Destroys gut cells</p>
+            <section id="prevention" class="content-section space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Prevention Hub: Actionable Checklists</h2>
+                    <p class="text-gray-700 leading-relaxed mb-6">Prevention is the most economical strategy. It hinges on two pillars: breaking the transmission cycle through rigorous hygiene, and building calf resilience through excellent management. Use these checklists to review your on-farm protocols.</p>
+                    
+                    <div class="accordion-item border rounded-lg overflow-hidden">
+                        <div class="accordion-header bg-indigo-50 p-4 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-indigo-800">Critical Decontamination Protocol</h3>
+                            <span class="text-2xl text-indigo-600 transform transition-transform duration-300">&plus;</span>
                         </div>
-                        <div class="text-2xl font-bold text-gray-500">&rarr;</div>
-                        <div class="p-4 bg-orange-100 rounded-lg w-full md:w-1/4">
-                            <p class="font-bold">Villous Atrophy</p>
-                            <p class="text-sm">Reduced surface area</p>
-                        </div>
-                        <div class="text-2xl font-bold text-gray-500">&rarr;</div>
-                        <div class="p-4 bg-yellow-100 rounded-lg w-full md:w-1/4">
-                            <p class="font-bold">Malabsorption & Leakage</p>
-                            <p class="text-sm">Leads to diarrhoea, dehydration & acidosis</p>
+                        <div class="accordion-content bg-white p-4 border-t">
+                            <p class="mb-4 font-semibold">This two-step process is non-negotiable for all surfaces between calf batches.</p>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li><strong>Meticulous Physical Cleaning:</strong> Remove all bedding and manure. Use a detergent and hot water to scrub all surfaces (floors, walls, gates). The goal is a visually clean surface, free of any organic residue that protects oocysts.</li>
+                                <li><strong>Application of a Proven Disinfectant:</strong> After cleaning, apply a disinfectant effective against Crypto (e.g., Amine-based compounds, 6-7% Hydrogen Peroxide, or Steam Cleaning >72°C). Follow manufacturer's instructions for concentration and contact time. Allow surfaces to dry completely afterwards.</li>
+                            </ol>
+                            <p class="mt-4 text-sm text-red-700 font-bold">Note: Standard quats and chlorine bleach are NOT effective.</p>
                         </div>
                     </div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Common Co-Pathogens</h2>
-                    <p class="text-gray-700 leading-relaxed mb-6">Cryptosporidiosis rarely occurs in isolation. Co-infections are common and significantly worsen the severity of disease and complicate treatment. This chart shows the prevalence of key pathogens found in scouring calves in a major NZ survey.</p>
-                    <div class="chart-container">
-                        <canvas id="pathogenChart"></canvas>
+
+                     <div class="accordion-item border rounded-lg overflow-hidden mt-4">
+                        <div class="accordion-header bg-indigo-50 p-4 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-indigo-800">Operational Biosecurity Checklist</h3>
+                            <span class="text-2xl text-indigo-600 transform transition-transform duration-300">&plus;</span>
+                        </div>
+                        <div class="accordion-content bg-white p-4 border-t">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong>Workflow:</strong> Always manage calves from **youngest to oldest**. Never go from older to younger pens without changing boots/coveralls.</li>
+                                <li><strong>Maternity Pen:</strong> Keep calving areas clean, dry, and well-bedded. Remove calf from dam and calving area promptly after birth.</li>
+                                <li><strong>Equipment:</strong> Dedicate feeding equipment to pens. Clean and disinfect all equipment **after every single use**.</li>
+                                <li><strong>Personnel:</strong> Use dedicated boots and coveralls for the calf shed. Implement mandatory hand washing/sanitizing.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item border rounded-lg overflow-hidden mt-4">
+                        <div class="accordion-header bg-indigo-50 p-4 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-indigo-800">Calf Rearing & Resilience Checklist</h3>
+                            <span class="text-2xl text-indigo-600 transform transition-transform duration-300">&plus;</span>
+                        </div>
+                        <div class="accordion-content bg-white p-4 border-t">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><strong>Colostrum - The 3 Qs:</strong>
+                                    <ul class="list-inside ml-4">
+                                        <li><strong>Quality:</strong> Use "Gold" colostrum (Brix reading ≥ 22%).</li>
+                                        <li><strong>Quantity:</strong> Feed 10-15% of body weight (4-6 litres for a 40kg calf).</li>
+                                        <li><strong>Quickly:</strong> Give the first feed within 6 hours of life.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Housing:</strong> Use individual pens for the first 1-2 weeks or small group pens on a strict "All-In, All-Out" basis. Never add new calves to an established group.</li>
+                                <li><strong>Bedding:</strong> Keep bedding deep, dry, and clean. Remove soiled bedding daily.</li>
+                                <li><strong>Stocking Density:</strong> Avoid overcrowding to reduce stress and pathogen load.</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <section id="management" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Prevention & Treatment Comparator</h2>
-                    <p class="text-gray-700 leading-relaxed mb-6">Effective management hinges on a multi-faceted approach. Prevention is paramount, but when disease occurs, several intervention options exist with varying costs, mechanisms, and limitations. Use the buttons below to compare the strategies. Supportive care (electrolytes) is a fundamental requirement for any scouring calf and is considered a baseline cost for treatment options.</p>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Treatment & Management Comparison</h2>
+                    <p class="text-gray-700 leading-relaxed mb-6">Effective management hinges on a multi-faceted approach. Supportive care (electrolytes) is a fundamental requirement for any scouring calf and is considered a baseline cost for treatment options. Use the buttons below to compare strategies. Costs are estimates for a 7-day course for a 40kg calf and exclude labour and vet consultation fees.</p>
                     <div class="flex flex-wrap justify-center gap-2 mb-6">
+                        <button class="treatment-btn p-2 px-4 bg-gray-200 rounded-md text-sm font-semibold" data-treatment="support">Supportive Care Only</button>
                         <button class="treatment-btn p-2 px-4 bg-gray-200 rounded-md text-sm font-semibold" data-treatment="halocur">Halofuginone Lactate</button>
                         <button class="treatment-btn p-2 px-4 bg-gray-200 rounded-md text-sm font-semibold" data-treatment="saponins">Saponins (Emerging)</button>
-                        <button class="treatment-btn p-2 px-4 bg-gray-200 rounded-md text-sm font-semibold" data-treatment="mos">MOS/β-Glucan/Probiotics</button>
+                        <button class="treatment-btn p-2 px-4 bg-gray-200 rounded-md text-sm font-semibold" data-treatment="mos">Gut Health Modulators</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -159,7 +211,7 @@
             </section>
             
             <section id="economics" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="bg-white p-6 rounded-lg shadow-md">
                     <h2 class="text-2xl font-bold text-blue-800 mb-4">The Economic Burden of Cryptosporidiosis</h2>
                     <p class="text-gray-700 leading-relaxed mb-6">The financial impact of this disease is substantial, comprising both highly visible direct costs and often-underestimated indirect costs. Poor growth in surviving calves can delay their entry into the milking herd and reduce their lifetime productivity, making the true cost far greater than just treatment expenses.</p>
                     <div class="chart-container">
@@ -178,75 +230,52 @@
             const lifecycleStages = document.querySelectorAll('.lifecycle-stage');
             const lifecycleInfo = document.getElementById('lifecycle-info');
             const treatmentBtns = document.querySelectorAll('.treatment-btn');
+            const accordions = document.querySelectorAll('.accordion-item');
 
             const data = {
                 lifecycle: {
-                    ingestion: {
-                        title: "Ingestion & Excystation",
-                        text: "The cycle begins when a calf swallows environmentally resistant, thick-walled oocysts. In the gut, digestive processes trigger the oocyst wall to break down (excyst), releasing four infectious sporozoites."
-                    },
-                    replication: {
-                        title: "Asexual Replication (Merogony)",
-                        text: "The released sporozoites invade the epithelial cells lining the small intestine. They reside in a unique intracellular but extracytoplasmic location. Here, they multiply rapidly, destroying the host cell to release merozoites, which then infect adjacent cells, amplifying the infection."
-                    },
-                    sexual: {
-                        title: "Sexual Stage (Gametogony)",
-                        text: "After a few rounds of asexual multiplication, merozoites differentiate into male and female gametes. Fertilization occurs, forming a zygote, which then develops into a new oocyst."
-                    },
-                    autoinfection: {
-                        title: "Thin-Walled Oocysts & Autoinfection",
-                        text: "About 20% of the new oocysts have a thin wall. These are fragile and rupture before leaving the host, releasing their sporozoites to immediately re-infect the same calf. This autoinfection cycle is responsible for the rapid build-up of parasites and severe disease from a low initial dose."
-                    },
-                    shedding: {
-                        title: "Thick-Walled Oocysts & Environmental Contamination",
-                        text: "The remaining 80% of oocysts develop a thick, multi-layered wall. These are extremely resilient and are passed in the faeces, ready to infect another host immediately. A single calf can shed billions of these oocysts, leading to massive environmental contamination."
-                    }
+                    ingestion: { title: "Ingestion & Excystation", text: "The cycle begins when a calf swallows environmentally resistant, thick-walled oocysts. In the gut, digestive processes trigger the oocyst wall to break down (excyst), releasing four infectious sporozoites." },
+                    replication: { title: "Asexual Replication (Merogony)", text: "The released sporozoites invade the epithelial cells lining the small intestine. They reside in a unique intracellular but extracytoplasmic location. Here, they multiply rapidly, destroying the host cell to release merozoites, which then infect adjacent cells, amplifying the infection." },
+                    sexual: { title: "Sexual Stage (Gametogony)", text: "After a few rounds of asexual multiplication, merozoites differentiate into male and female gametes. Fertilization occurs, forming a zygote, which then develops into a new oocyst." },
+                    autoinfection: { title: "Thin-Walled Oocysts & Autoinfection", text: "About 20% of the new oocysts have a thin wall. These are fragile and rupture before leaving the host, releasing their sporozoites to immediately re-infect the same calf. This autoinfection cycle is responsible for the rapid build-up of parasites and severe disease from a low initial dose." },
+                    shedding: { title: "Thick-Walled Oocysts & Environmental Contamination", text: "The remaining 80% of oocysts develop a thick, multi-layered wall. These are extremely resilient and are passed in the faeces, ready to infect another host immediately. A single calf can shed billions of these oocysts, leading to massive environmental contamination." }
                 },
                 treatments: {
+                    support: {
+                        title: "Supportive Care Only",
+                        details: `<p><strong>Type:</strong> Essential Treatment</p><p><strong>Mechanism:</strong> Does not treat the parasite. Addresses life-threatening dehydration and metabolic acidosis by replenishing fluids and electrolytes. This is the cornerstone of care for any scouring calf.</p><p><strong>Efficacy:</strong> Critical for survival. Should be administered as soon as scours are observed.</p><p><strong>Limitations:</strong> Does not reduce parasite load or environmental contamination.</p>`,
+                        costs: { active: 0, support: 38.5 }
+                    },
                     halocur: {
                         title: "Halofuginone Lactate (Halocur®)",
-                        details: `
-                            <p><strong>Type:</strong> Specific Anti-parasitic (Veterinary Medicine)</p>
-                            <p><strong>Mechanism:</strong> Cryptosporidiostatic. It inhibits parasite replication, reducing oocyst shedding and slowing the progression of infection. It does not kill existing parasites.</p>
-                            <p><strong>Efficacy:</strong> Licensed in NZ for prevention and reduction of diarrhoea. Can improve survival rates. However, its effectiveness is severely limited by co-infections (e.g., Rotavirus) and it has a narrow therapeutic margin.</p>
-                            <p><strong>Limitations:</strong> Potential for toxicity if overdosed. Not recommended for severely dehydrated calves or those scouring for >24 hours. May negatively impact weight gain.</p>
-                        `,
+                        details: `<p><strong>Type:</strong> Specific Anti-parasitic (Veterinary Medicine)</p><p><strong>Mechanism:</strong> Cryptosporidiostatic. It inhibits parasite replication, reducing oocyst shedding. It does not kill existing parasites.</p><p><strong>Efficacy:</strong> Licensed in NZ for prevention and reduction of diarrhoea. Effectiveness is severely limited by co-infections (e.g., Rotavirus).</p><p><strong>Limitations:</strong> Narrow safety margin (risk of toxicity). Not for severely dehydrated calves. Requires veterinary authorisation.</p>`,
                         costs: { active: 28, support: 38.5 }
                     },
-                     mos: {
-                        title: "MOS/β-Glucan/Probiotics",
-                        details: `
-                            <p><strong>Type:</strong> Prophylactic Gut Health Modulator</p>
-                            <p><strong>Mechanism:</strong> Aims to build resilience, not treat active scours. MOS can bind certain pathogens, preventing colonization. Beta-glucans modulate the immune system. Probiotics (*Bacillus spp.*) support a healthy gut microbiome.</p>
-                            <p><strong>Efficacy:</strong> Used prophylactically. Studies link supplementation to improved daily gain, better feed efficiency, and reduced incidence of scours and pneumonia. Does not directly target *Cryptosporidium*.</p>
-                            <p><strong>Limitations:</strong> Not a treatment for active disease. Its value is in long-term, preventative herd health strategy.</p>
-                        `,
+                    mos: {
+                        title: "Gut Health Modulators (MOS/β-Glucan/Probiotics)",
+                        details: `<p><strong>Type:</strong> Prophylactic/Preventative</p><p><strong>Mechanism:</strong> Aims to build resilience and protect against impact of secondary pathogens. May have limited impact on active crptosporidium infection. MOS can bind certain pathogens (coliforms and salmonella), Beta-glucans modulate immunity, and Probiotics support a healthy gut microbiome.</p><p><strong>Efficacy:</strong> Used prophylactically. Linked to improved daily gain and reduced incidence of scours.</p><p><strong>Limitations:</strong> Does not directly target *Cryptosporidium*. Value is in long-term, preventative herd health strategy and support during disease challenge.</p>`,
                         costs: { active: 10.5, support: 0 }
                     },
                     saponins: {
                         title: "Saponins (Quillaja Extract)",
-                        details: `
-                            <p><strong>Type:</strong> Emerging Natural Alternative</p>
-                            <p><strong>Mechanism:</strong> Dual-action. Pre-clinical studies suggest it reduces oocyst shedding (anti-parasitic) and lowers intestinal inflammation (anti-inflammatory). May interfere with parasite attachment to gut cells.</p>
-                            <p><strong>Efficacy:</strong> Promising results in lab models, but not yet validated in controlled calf trials in NZ. Not a registered veterinary medicine for this use.</p>
-                            <p><strong>Limitations:</strong> Hypothetical use case. Dosage and safety in calves are not established. Currently available for horticultural use, not as a feed supplement for scours.</p>
-                        `,
+                        details: `<p><strong>Type:</strong> Emerging Natural Alternative</p><p><strong>Mechanism:</strong> Pre-clinical studies suggest it reduces oocyst shedding (anti-parasitic) and lowers intestinal inflammation (anti-inflammatory).</p><p><strong>Efficacy:</strong> Promising lab results, but not yet validated in controlled calf trials in NZ. Not a registered veterinary medicine for this use.</p><p><strong>Limitations:</strong> Hypothetical use case. Cost is based on horticultural product price and an assumed dose.</p>`,
                         costs: { active: 6.3, support: 38.5 }
-                   }
+                    }
                 }
             };
             
             function switchTab(targetId) {
-                contentSections.forEach(section => {
-                    section.classList.toggle('active', section.id === targetId);
-                });
-                navLinks.forEach(link => {
-                    link.classList.toggle('active', link.dataset.target === targetId);
-                });
+                contentSections.forEach(section => section.classList.toggle('active', section.id === targetId));
+                navLinks.forEach(link => link.classList.toggle('active', link.dataset.target === targetId));
             }
 
             navLinks.forEach(link => {
-                link.addEventListener('click', () => switchTab(link.dataset.target));
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.dataset.target;
+                    switchTab(targetId);
+                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
             });
 
             lifecycleStages.forEach(stage => {
@@ -256,32 +285,25 @@
                     lifecycleInfo.innerHTML = `<h4 class="font-bold text-lg text-blue-900 mb-2">${infoData.title}</h4><p>${infoData.text}</p>`;
                 });
             });
-
-            let pathogenChart, costChart, economicImpactChart;
-
-            function createPathogenChart() {
-                const ctx = document.getElementById('pathogenChart').getContext('2d');
-                if (pathogenChart) pathogenChart.destroy();
-                pathogenChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Rotavirus', 'Cryptosporidium', 'E. coli', 'Salmonella'],
-                        datasets: [{
-                            label: 'Prevalence in Scouring Calves (%)',
-                            data: [50, 47, 37, 10],
-                            backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#8b5cf6'],
-                            borderColor: ['#1e40af', '#b91c1c', '#c2410c', '#6d28d9'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, title: { display: true, text: 'Pathogen Prevalence in NZ Scouring Calves' } },
-                        scales: { y: { beginAtZero: true, max: 60, title: { display: true, text: 'Prevalence (%)' } } }
+            
+            accordions.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = header.querySelector('span');
+                header.addEventListener('click', () => {
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    accordions.forEach(i => {
+                        i.querySelector('.accordion-content').style.maxHeight = '0px';
+                        i.querySelector('.accordion-header span').style.transform = 'rotate(0deg)';
+                    });
+                    if (!isOpen) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(45deg)';
                     }
                 });
-            }
+            });
+
+            let costChart, economicImpactChart;
 
             function createEconomicImpactChart() {
                 const ctx = document.getElementById('economicImpactChart').getContext('2d');
@@ -290,27 +312,12 @@
                     type: 'bar',
                     data: {
                         labels: ['Mortality', 'Vet & Meds', 'Labour', 'Reduced Growth', 'Delayed Replacement'],
-                        datasets: [{
-                            label: 'Direct Costs',
-                            data: [90, 40, 20, 0, 0],
-                            backgroundColor: '#ef4444',
-                        }, {
-                            label: 'Indirect Costs',
-                            data: [0, 0, 0, 85, 50],
-                            backgroundColor: '#f97316',
-                        }]
+                        datasets: [{ label: 'Direct Costs', data: [90, 40, 20, 0, 0], backgroundColor: '#ef4444' }, { label: 'Indirect Costs', data: [0, 0, 0, 85, 50], backgroundColor: '#f97316' }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: { display: true, text: 'Estimated Cost Components per Case (Illustrative)' },
-                            tooltip: { callbacks: { label: (context) => `${context.dataset.label}: NZ$ ${context.raw}` } }
-                        },
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, title: { display: true, text: 'Estimated Cost (NZ$)' } }
-                        }
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { title: { display: true, text: 'Estimated Cost Components per Case (Illustrative)' }, tooltip: { callbacks: { label: (context) => `${context.dataset.label}: NZ$ ${context.raw}` } } },
+                        scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Estimated Cost (NZ$)' } } }
                     }
                 });
             }
@@ -318,29 +325,17 @@
             function updateCostChart(treatmentKey) {
                 const ctx = document.getElementById('costChart').getContext('2d');
                 const treatmentData = data.treatments[treatmentKey];
-                
-                if (costChart) {
-                    costChart.destroy();
-                }
-                
+                if (costChart) costChart.destroy();
                 costChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: ['Active Ingredient/Supplement', 'Supportive Care (Electrolytes)'],
-                        datasets: [{
-                            label: 'Estimated Cost (NZD)',
-                            data: [treatmentData.costs.active, treatmentData.costs.support],
-                            backgroundColor: ['#1e40af', '#60a5fa'],
-                        }]
+                        datasets: [{ label: 'Estimated Cost (NZD)', data: [treatmentData.costs.active, treatmentData.costs.support], backgroundColor: ['#1e3a8a', '#60a5fa'] }]
                     },
                     options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
-                        scales: {
-                            x: { beginAtZero: true, title: { display: true, text: 'Cost (NZ$)' } }
-                        }
+                        scales: { x: { beginAtZero: true, stacked: true, title: { display: true, text: 'Cost (NZ$)' } }, y: { stacked: true } }
                     }
                 });
             }
@@ -349,10 +344,8 @@
                 btn.addEventListener('click', () => {
                     const treatmentKey = btn.dataset.treatment;
                     const treatmentData = data.treatments[treatmentKey];
-
                     treatmentBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-
                     document.getElementById('treatment-title').innerText = treatmentData.title;
                     document.getElementById('treatment-details').innerHTML = treatmentData.details;
                     updateCostChart(treatmentKey);
@@ -361,10 +354,8 @@
 
             // Initial state
             switchTab('overview');
-            createPathogenChart();
             createEconomicImpactChart();
-            // Set initial state for treatment comparator
-            document.querySelector('.treatment-btn[data-treatment="halocur"]').click();
+            document.querySelector('.treatment-btn[data-treatment="support"]').click();
         });
     </script>
 </body>
